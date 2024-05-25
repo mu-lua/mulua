@@ -1,0 +1,11 @@
+#pragma once
+#ifndef _MULUA_GUARD__FMT_PRINT
+#define _MULUA_GUARD__FMT_PRINT
+
+#include <fmt/core.h>
+namespace std
+{
+using fmt::print;
+} // namespace std
+
+#endif //_MULUA_GUARD__FMT_PRINT

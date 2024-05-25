@@ -1,0 +1,148 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "lint",
+            "icon": {
+                "id": "bug"
+            },
+            "group": {
+                "kind": "test",
+            },
+            "type": "shell",
+            "command": "cd ${workspaceFolder}; make lint",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                {
+                    "owner": "lua",
+                    "fileLocation": [
+                        "absolute"
+                    ],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+): (.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "message": 4
+                    }
+                }
+            ]
+        },
+        {
+            "label": "build",
+            "icon": {
+                "id": "project"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "type": "shell",
+            "command": "cd ${workspaceFolder}; make build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                "$gcc",
+                "$msvc",
+                "$msCompile",
+                {
+                    "owner": "lua",
+                    "fileLocation": [
+                        "absolute"
+                    ],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+): (.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "message": 4
+                    }
+                }
+            ]
+        },
+        {
+            "label": "test",
+            "icon": {
+                "id": "bug"
+            },
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "type": "shell",
+            "command": "cd ${workspaceFolder}; make test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                {
+                    "owner": "lua",
+                    "fileLocation": [
+                        "absolute"
+                    ],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+): (.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "message": 4
+                    }
+                }
+            ]
+        },
+        {
+            "label": "profile",
+            "icon": {
+                "id": "bug"
+            },
+            "group": {
+                "kind": "test",
+            },
+            "type": "shell",
+            "command": "cd ${workspaceFolder}; make profile",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+        },
+        {
+            "label": "run",
+            "icon": {
+                "id": "run"
+            },
+            "group": {
+                "kind": "none",
+                "isDefault": true
+            },
+            "type": "shell",
+            "command": "cd ${workspaceFolder}; make run MUD=TestMUD",
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            },
+            "problemMatcher": [
+                {
+                    "owner": "lua",
+                    "fileLocation": [
+                        "absolute"
+                    ],
+                    "pattern": {
+                        "regexp": "^(.*):(\\d+):(\\d+): (.*)$",
+                        "file": 1,
+                        "line": 2,
+                        "column": 3,
+                        "message": 4
+                    }
+                }
+            ]
+        },
+    ]
+}

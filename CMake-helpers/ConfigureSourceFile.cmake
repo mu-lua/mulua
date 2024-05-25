@@ -1,0 +1,18 @@
+include_guard(DIRECTORY)
+
+function(configure_source_file TEMPLATE_FILENAME)
+     configure_source_outfilename("${TEMPLATE_FILENAME}" GENERATED_FILENAME)
+     message("-- Configuring file: ${GENERATED_FILENAME}")
+     configure_file("${TEMPLATE_FILENAME}" "${GENERATED_FILENAME}" @ONLY FILE_PERMISSIONS WORLD_READ GROUP_READ OWNER_READ)
+endfunction()
+
+function(configure_source_outfilename TEMPLATE_FILENAME GENERATED_FILENAME_VAR)
+     if(TEMPLATE_FILENAME MATCHES "(.*)\.cmake.in\.(.*)")
+          set(${GENERATED_FILENAME_VAR} "${CMAKE_MATCH_1}.cmake-out.${CMAKE_MATCH_2}"  PARENT_SCOPE)
+     else()
+          cmake_path(GET TEMPLATE_FILENAME PARENT_PATH TEMPLATE_PATH)
+          cmake_path(GET TEMPLATE_FILENAME STEM LAST_ONLY TEMPLATE_STEM)
+  		cmake_path(GET TEMPLATE_FILENAME EXTENSION LAST_ONLY TEMPLATE_EXT)
+          set(${GENERATED_FILENAME_VAR} "${TEMPLATE_PATH}/.${TEMPLATE_STEM}.cmake-out${TEMPLATE_EXT}" PARENT_SCOPE)
+     endif()
+endfunction()

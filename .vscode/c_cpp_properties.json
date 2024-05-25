@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "name": "Windows Mode with Linux compiler override",
+            "cStandard": "c17",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "windows-clang-x86",
+            "compilerPath": "/bin/clang++",
+            "compilerArgs": [],
+            "browse": {
+                "path": [
+                    "${workspaceFolder}/.vscode"
+                ]
+            },
+            "mergeConfigurations": false,
+            "includePath": [
+                "${workspaceFolder}/src/srvr/include",
+                "${workspaceFolder}/src/srvr/libfmt_polyfill"
+            ],
+            "defines": []
+        }
+    ],
+    "version": 4
+}

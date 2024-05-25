@@ -1,0 +1,81 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		// Language Settings
+		"files.associations": {
+			"*.bat": "bat",
+			"Makefile": "makefile",
+			"*CMakeLists.txt": "cmake",
+			"*.cmake": "cmake",
+			"*.c": "cpp",
+			"*.h": "cpp",
+			"*.cpp": "cpp",
+			"*.hpp": "cpp",
+			"*.lua": "lua",
+			"*.md": "markdown"
+		},
+		"[bat]": {
+			"editor.useTabStops": true,
+			"files.eol": "\r\n"
+		},
+		"[shellscript]": {
+			"files.eol": "\n"
+		},
+		"[makefile]": {
+			"editor.defaultFormatter": "ms-vscode.makefile-tools",
+			"editor.insertSpaces": false,
+			"editor.useTabStops": false,
+			"editor.tabSize": 6,
+		},
+		"[cmake]": {
+			"editor.defaultFormatter": "ms-vscode.cmake-tools",
+			"editor.autoIndent": "advanced",
+			"editor.useTabStops": true,
+			"editor.tabSize": 5
+		},
+		"[cpp]": {
+			"editor.defaultFormatter": "ms-vscode.cpptools",
+			"editor.autoIndent": "advanced",
+			"editor.formatOnSave": true,
+		},
+		"[lua]": {
+			"editor.defaultFormatter": "JohnnyMorganz.stylua",
+		},
+		"[json]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.quickSuggestions": {
+				"strings": true
+			},
+			"editor.suggest.insertMode": "replace"
+		},
+		"[jsonc]": {
+			"editor.defaultFormatter": "vscode.json-language-features",
+			"editor.quickSuggestions": {
+				"strings": true
+			},
+			"editor.comments.ignoreEmptyLines": true,
+			"editor.suggest.insertMode": "replace"
+		},
+		"[markdown]": {
+			"editor.defaultFormatter": "vscode.markdown-language-features",
+			"editor.unicodeHighlight.ambiguousCharacters": false,
+			"editor.unicodeHighlight.invisibleCharacters": false,
+			"diffEditor.ignoreTrimWhitespace": false,
+			"editor.wordWrap": "on",
+			"editor.quickSuggestions": {
+				"comments": "off",
+				"strings": "off",
+				"other": "off"
+			},
+			"editor.formatOnType": false,
+			"editor.formatOnPaste": false,
+			"editor.formatOnSave": true,
+			"editor.formatOnSaveMode": "file"
+		},
+		"files.readonlyFromPermissions": true,
+	}
+}

@@ -1,0 +1,17 @@
+#pragma once
+#ifndef _MULUA_GUARD__FMT_FORMAT
+#define _MULUA_GUARD__FMT_FORMAT
+
+#include <fmt/core.h>
+namespace std
+{
+using fmt::format;
+
+#if (FMT_VERSION >= 80000)
+using fmt::format_args;
+using fmt::format_string;
+enum class _Add_newline : bool { _Nope, _Yes };
+#endif // FMT_VERSION
+} // namespace std
+
+#endif //_MULUA_GUARD__FMT_FORMAT

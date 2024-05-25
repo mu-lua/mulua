@@ -1,0 +1,308 @@
+#TODO: Overview of what this file does
+# 1. LUAmakeLog()
+# 2. Make lua.hpp
+# 3. Process Makefile ("." "include" "src" "src/lib" "src/lua" "src/luac")
+# 3a. Transfer_Hfiles_INTERFACE
+# 3b. ProcessSourceFiles
+# 4. add_library(${LUA_TARGET_NAME}-library STATIC)
+# 5. Make lua5I and lua5C
+# 5a. add_executable(${LUA_TARGET_NAME}I)
+# 5b. add_executable(${LUA_TARGET_NAME}C)
+# 6. Set files to READONLY
+
+cmake_minimum_required(VERSION 3.25)
+
+include(CMakePrintHelpers)		# Provide cmake_print_variables(...)
+set(LUA_TARGET_NAME @_LUA_TARGET_NAME@)
+cmake_print_variables(LUA_TARGET_NAME)
+set(LUA_VERSION @_LUA_VERSION@)
+cmake_print_variables(LUA_VERSION)
+set(LUA_MAKE_BINARIES @_LUA_MAKE_BINARIES@)
+cmake_print_variables(LUA_MAKE_BINARIES)
+
+project(${LUA_TARGET_NAME}:project VERSION ${LUA_VERSION} LANGUAGES C)
+cmake_path(CONVERT "${CMAKE_CURRENT_LIST_DIR}/../include" TO_NATIVE_PATH_LIST LUA_INTERFACE_FULLDIR NORMALIZE)
+cmake_path(CONVERT "${CMAKE_CURRENT_LIST_DIR}/../libs" TO_NATIVE_PATH_LIST LUA_LIBRARIES_FULLDIR NORMALIZE)
+cmake_path(CONVERT "${CMAKE_CURRENT_LIST_DIR}/../bin" TO_NATIVE_PATH_LIST LUA_BINARIES_FULLDIR NORMALIZE)
+
+block(PROPAGATE LOG_NATIVE_PATH_FILE)
+	cmake_path(CONVERT "${CMAKE_CURRENT_LIST_DIR}/../log/parse-LUA-Makefile.log" TO_NATIVE_PATH_LIST LOG_NATIVE_PATH_FILE NORMALIZE)
+	if(EXISTS ${LOG_NATIVE_PATH_FILE})
+		file(WRITE ${LOG_NATIVE_PATH_FILE} "")
+		file(SIZE ${LOG_NATIVE_PATH_FILE} FILE_SIZE)
+	else()
+		file(WRITE ${LOG_NATIVE_PATH_FILE} "")
+		file(SIZE ${LOG_NATIVE_PATH_FILE} FILE_SIZE)
+	endif()
+	if(FILE_SIZE EQUAL 0)
+		file(APPEND ${LOG_NATIVE_PATH_FILE} "This is a log of the LUA library process that reads the Makefile and creates a CMakeFile.txt")
+		file(APPEND ${LOG_NATIVE_PATH_FILE} "\n\n")
+	endif()
+endblock()
+set_property(GLOBAL PROPERTY LUAmakeLog__Show_DT TRUE)
+function(LUAmakeLog)
+	string(TIMESTAMP DT "%d-%b-%y %H:%M:%S")
+	# No parameters passed, so just produce a blank line
+	if(ARGC EQUAL 0)
+		file(APPEND ${LOG_NATIVE_PATH_FILE} "\n")
+		set_property(GLOBAL PROPERTY LUAmakeLog__Show_DT TRUE)
+		return()
+	endif()
+	# Loop through each ARG passed
+	math(EXPR CNT "${ARGC}-1")
+	foreach(IDX RANGE ${CNT})
+		set(ARG "${ARGV${IDX}}")
+		string(LENGTH "${ARG}" LEN)
+		# An empty ARG is a blank line
+		if(${LEN} EQUAL 0)
+			file(APPEND ${LOG_NATIVE_PATH_FILE} "\n")
+			set_property(GLOBAL PROPERTY LUAmakeLog__Show_DT TRUE)
+		else()
+			get_property(SHOW_DT GLOBAL PROPERTY LUAmakeLog__Show_DT)
+			if(SHOW_DT)
+				file(APPEND ${LOG_NATIVE_PATH_FILE} "${DT} ")
+			endif()
+			# Extract last character of the string
+			math(EXPR LEN "${LEN}-1")
+			string(SUBSTRING "${ARG}" ${LEN} 1 LAST)
+			if(${LAST} STREQUAL "\\")
+				# A line ending in a slosh does not have a newline appended
+				string(SUBSTRING "${ARG}" 0 ${LEN} ARG)
+				file(APPEND ${LOG_NATIVE_PATH_FILE} "${ARG}")
+				set_property(GLOBAL PROPERTY LUAmakeLog__Show_DT FALSE)
+			else()
+				file(APPEND ${LOG_NATIVE_PATH_FILE} "${ARG}\n")
+				set_property(GLOBAL PROPERTY LUAmakeLog__Show_DT TRUE)
+			endif()
+		endif()
+	endforeach()
+endfunction()
+cmake_language(CALL LUAmakeLog "MAKEFILE PARSING PROCESS - Started" "" "")
+cmake_language(DEFER CALL LUAmakeLog "" "" "MAKEFILE PARSING PROCESS - Finished")
+
+# Build the main #include file for LUA
+LUAmakeLog("---  Creating directory '${LUA_INTERFACE_FULLDIR}'")
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/src/lua.hpp")
+	LUAmakeLog("---  Using '${CMAKE_CURRENT_LIST_DIR}/src/lua.hpp'")
+	file(READ "${CMAKE_CURRENT_LIST_DIR}/src/lua.hpp" HPP_CONTENTS)
+elseif(EXISTS "${CMAKE_CURRENT_LIST_DIR}/include/lua.hpp")
+	LUAmakeLog("---  Using '${CMAKE_CURRENT_LIST_DIR}/include/lua.hpp'")
+	file(READ "${CMAKE_CURRENT_LIST_DIR}/include/lua.hpp" HPP_CONTENTS)
+elseif(EXISTS "${CMAKE_CURRENT_LIST_DIR}/etc/lua.hpp")
+	LUAmakeLog("---  Using '${CMAKE_CURRENT_LIST_DIR}/etc/lua.hpp'")
+	file(READ "${CMAKE_CURRENT_LIST_DIR}/etc/lua.hpp" HPP_CONTENTS)
+else()
+	LUAmakeLog("---  Generating missing 'lua.hpp' for version ${LUA_VERSION}")
+	set(HPP_CONTENTS "extern \"C\" {\n#include \"lua.h\"\n#include \"lualib.h\"\n#include \"lauxlib.h\"\n}")
+endif()
+file(MAKE_DIRECTORY ${LUA_INTERFACE_FULLDIR})
+file(WRITE "${LUA_INTERFACE_FULLDIR}/lua.tmp" "${HPP_CONTENTS}")
+file(COPY_FILE "${LUA_INTERFACE_FULLDIR}/lua.tmp" "${LUA_INTERFACE_FULLDIR}/lua.hpp" ONLY_IF_DIFFERENT) #INPUT_MAY_BE_RECENT
+file(REMOVE "${LUA_INTERFACE_FULLDIR}/lua.tmp")
+LUAmakeLog("---  Saving '${LUA_INTERFACE_FULLDIR}/lua.hpp'")
+LUAmakeLog()
+
+function (Transfer_Hfiles_INTERFACE H_SOURCE_DIR H_FILE_LIST)
+	LUAmakeLog() # NL at end of 'Checking line:-'
+	if(NOT ARGC EQUAL 2)
+		message(FATAL_ERROR "Incorrect parameter count (${ARGC}) passed to function Transfer_Hfiles_INTERFACE(<H_SOURCE_DIR> <H_FILE_LIST>)")
+		return()
+	endif()
+	foreach(H_FILE ${H_FILE_LIST})
+		cmake_path(GET H_FILE FILENAME H_FILENAME)
+		LUAmakeLog("--  COPYING '${LUA_INTERFACE_FULLDIR}/${H_FILENAME}' from '${H_SOURCE_DIR}/${H_FILE}'")
+		file(COPY_FILE "${CMAKE_CURRENT_LIST_DIR}/${H_SOURCE_DIR}/${H_FILE}" "${LUA_INTERFACE_FULLDIR}/${H_FILENAME}" ONLY_IF_DIFFERENT)
+	endforeach()
+endfunction()
+
+function (ProcessSourceFiles SOURCE_DIR FILE_LIST PROJ_NAME PROJ_VAL)
+	LUAmakeLog() # NL at end of 'Checking line:-'
+	if(NOT ARGC EQUAL 4)
+		message(FATAL_ERROR "Incorrect parameter count (${ARGC}) passed to function ProcessSourceFiles(<SOURCE_DIR> <FILE_LIST> <PROJ_NAME> <PROJ_VAL>)")
+		return()
+	endif()
+	foreach(OBJ_FILE ${FILE_LIST})
+  		cmake_path(GET OBJ_FILE STEM LAST_ONLY OBJ_FILE_STEM)
+  		cmake_path(GET OBJ_FILE EXTENSION LAST_ONLY OBJ_FILE_EXT)
+		if(OBJ_FILE_EXT STREQUAL ".o")
+			LUAmakeLog("--  COMPILING '${SOURCE_DIR}/${OBJ_FILE_STEM}.c' \\")
+			if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/${SOURCE_DIR}/${OBJ_FILE_STEM}.c")
+				LUAmakeLog("into '${PROJ_NAME}'")
+				list(APPEND PROJ_VAL "${SOURCE_DIR}/${OBJ_FILE_STEM}.c")
+			elseif(${SOURCE_DIR} STREQUAL "src/luac" AND ${OBJ_FILE_STEM} STREQUAL "lopcodes")
+				# Extra code for LUA v5.0
+				LUAmakeLog("into '${PROJ_NAME}' ->> 5.0 lopcodes.c -DLUA_OPNAMES")
+				list(APPEND PROJ_VAL "src/luac/../lopcodes.c")
+				set_source_files_properties("src/luac/../lopcodes.c" PROPERTIES COMPILE_DEFINITIONS "LUA_OPNAMES")
+			else()
+				LUAmakeLog(" ->> ERROR: Unable to locate file __${SOURCE_DIR}__${OBJ_FILE_STEM}__")
+			endif()
+		endif()
+	endforeach()
+	set(${PROJ_NAME} "${PROJ_VAL}" PARENT_SCOPE)
+endfunction()
+
+foreach(MAKEFILE_DIR "." "include" "src" "src/lib" "src/lua" "src/luac")
+	if(NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${MAKEFILE_DIR}/Makefile")
+		LUAmakeLog("!!!!  Unable to find Makefile in directory '${MAKEFILE_DIR}'")
+	else()
+		# Read the LUA Makefiles and create the variables LIB_SOURCES, LUAI_SOURCES, LUAC_SOURCES and copy the interface headers to LUA_INTERFACE_FULLDIR
+		LUAmakeLog("****  Processing Makefile in directory '${MAKEFILE_DIR}'")
+		message("-- Processing Makefile in directory '${MAKEFILE_DIR}'")
+
+		# Read the file, change tabs to spaces, concatenate lines which end in \, strip leading and trailing spaces, and then change NL to ; so it is a CMake list
+		block(PROPAGATE CONTENTS)
+			file(READ "${CMAKE_CURRENT_LIST_DIR}/${MAKEFILE_DIR}/Makefile" CONTENTS)
+			set(SLOSH_CODE "_^_")								# We use the replacement code for easier search & replace
+			string(REPLACE "\t" " " CONTENTS "${CONTENTS}")    		# Change TAB to SPACE
+			string(REPLACE "\\" "${SLOSH_CODE}" CONTENTS "${CONTENTS}")	# Use the SLOSH_CODE
+			string(REPLACE "\r" "" CONTENTS "${CONTENTS}")			# Remove CR
+			string(REPLACE "\n" ";" CONTENTS "${CONTENTS}")			# Transform string into CMake list
+			list(TRANSFORM CONTENTS STRIP)                    		# Strip leading/trailing spaces from each list item
+			string(REPLACE "${SLOSH_CODE};" "" CONTENTS "${CONTENTS}")	# Concat lines that end with a back slash
+			string(REPLACE "${SLOSH_CODE}" "\\" CONTENTS "${CONTENTS}")	# Now restore the backslash
+			list(REMOVE_ITEM CONTENTS "")							# Remove empty lines
+		endblock()
+
+		# Move through the lines now that we have normalized the Makefile contents
+		foreach(LINE ${CONTENTS})
+			if(LINE MATCHES "^([A-Za-z0-9_\.]+) *[:=] *(.+)")
+				# CMAKE_MATCH_1 [:=] CMAKE_MATCH_2
+				# CMAKE_MATCH_2 is a space seperated list of filenames, CMake seeperates with a ;
+				string(REPLACE " " ";" FILENAMES "${CMAKE_MATCH_2}")  # Split 2nd match on spaces
+				list(REMOVE_ITEM FILENAMES "")                        # Remove empty elements
+				LUAmakeLog("--  Checking line:- ${CMAKE_MATCH_1} << ${FILENAMES}\\")
+				
+				# INTERFACE header files
+				if(MAKEFILE_DIR STREQUAL "." AND CMAKE_MATCH_1 STREQUAL "TO_INC")
+					Transfer_Hfiles_INTERFACE("src" "${FILENAMES}")
+				elseif(MAKEFILE_DIR STREQUAL "include" AND CMAKE_MATCH_1 STREQUAL "SRCS")
+					Transfer_Hfiles_INTERFACE("${MAKEFILE_DIR}" "${FILENAMES}")
+
+				# STATIC library source files
+				elseif(MAKEFILE_DIR STREQUAL "src" AND CMAKE_MATCH_1 STREQUAL "CORE_O")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LIB_SOURCES "${LIB_SOURCES}")
+				elseif(MAKEFILE_DIR STREQUAL "src" AND CMAKE_MATCH_1 STREQUAL "LIB_O")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LIB_SOURCES "${LIB_SOURCES}")
+				elseif(MAKEFILE_DIR STREQUAL "src" AND CMAKE_MATCH_1 STREQUAL "OBJS")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LIB_SOURCES "${LIB_SOURCES}")
+				elseif(MAKEFILE_DIR STREQUAL "src/lib" AND CMAKE_MATCH_1 STREQUAL "OBJS")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LIB_SOURCES "${LIB_SOURCES}")
+
+				# LUA interpreter source files
+				elseif(MAKEFILE_DIR STREQUAL "src" AND CMAKE_MATCH_1 STREQUAL "LUA_O")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LUAI_SOURCES "${LUAI_SOURCES}")
+				elseif(MAKEFILE_DIR STREQUAL "src/lua" AND CMAKE_MATCH_1 STREQUAL "OBJS")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LUAI_SOURCES "${LUAI_SOURCES}")
+
+				# LUA compiler source files
+				elseif(MAKEFILE_DIR STREQUAL "src" AND CMAKE_MATCH_1 STREQUAL "LUAC_O")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LUAC_SOURCES "${LUAC_SOURCES}")
+				elseif(MAKEFILE_DIR STREQUAL "src/luac" AND CMAKE_MATCH_1 STREQUAL "OBJS")
+					ProcessSourceFiles("${MAKEFILE_DIR}" "${FILENAMES}" LUAC_SOURCES "${LUAC_SOURCES}")
+				else()
+					# Complete 'Checking line:- ...\\'
+					LUAmakeLog(" ->> NO ACTION REQUIRED in directory ${MAKEFILE_DIR}")
+					continue()
+				endif()
+			else()
+				LUAmakeLog("--  Ignoring line:- ${LINE}")
+				continue()
+			endif()
+		endforeach()
+	endif()
+endforeach()
+
+LUAmakeLog("")
+LUAmakeLog("=  Collected information")
+
+LUAmakeLog("==  LIB_SOURCES ${LIB_SOURCES}")
+add_library(${LUA_TARGET_NAME}-library STATIC)
+set_target_properties(${LUA_TARGET_NAME}-library
+		PROPERTIES
+			ARCHIVE_OUTPUT_DIRECTORY "${LUA_LIBRARIES_FULLDIR}"
+			ARCHIVE_OUTPUT_DIRECTORY_$<CONFIG> "${LUA_LIBRARIES_FULLDIR}"
+			OUTPUT_NAME "${LUA_TARGET_NAME}-$<IF:$<BOOL:$<CONFIG>>,$<CONFIG>,${CMAKE_BUILD_TYPE}>"
+	)
+target_include_directories(${LUA_TARGET_NAME}-library INTERFACE ${LUA_INTERFACE_FULLDIR})
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/include")
+	LUAmakeLog("===  Adding includes: '${CMAKE_CURRENT_LIST_DIR}/include'")
+	target_include_directories(${LUA_TARGET_NAME}-library PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
+endif()
+target_compile_definitions(${LUA_TARGET_NAME}-library PRIVATE _CRT_SECURE_NO_WARNINGS)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	target_compile_options(${LUA_TARGET_NAME}-library PRIVATE -Wno-everything)
+endif()
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-fexperimental-library CLANG_EXPERIMENTAL)
+if(CLANG_EXPERIMENTAL)
+  target_compile_options(${LUA_TARGET_NAME}-library PRIVATE -fexperimental-library)
+endif()
+target_sources(${LUA_TARGET_NAME}-library PRIVATE ${LIB_SOURCES})
+message("-- Exporting ${LUA_LIBRARIES_FULLDIR}/${LUA_TARGET_NAME}-library-export.cmake")
+export(TARGETS
+			${LUA_TARGET_NAME}-library
+		FILE
+			"${LUA_LIBRARIES_FULLDIR}/${LUA_TARGET_NAME}-library-export.cmake"
+	)
+
+# Make lua5I and lua5C
+if(LUA_MAKE_BINARIES)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${LUA_BINARIES_FULLDIR}/${CMAKE_BUILD_CODE}")
+	message("-- Building executables in ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+	message("\t${LUA_TARGET_NAME}I :- LUA command line interpreter")
+	message("\t${LUA_TARGET_NAME}C :- LUA command line compiler")
+
+	LUAmakeLog("==  LUAI_SOURCES ${LUAI_SOURCES}")
+	add_executable(${LUA_TARGET_NAME}I)
+	if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/include")
+		LUAmakeLog("===  Adding includes: '${CMAKE_CURRENT_LIST_DIR}/include'")
+		target_include_directories(${LUA_TARGET_NAME}I PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include")
+	endif()
+	target_compile_options(${LUA_TARGET_NAME}I PRIVATE -Wno-everything)
+	target_sources(${LUA_TARGET_NAME}I PRIVATE ${LUAI_SOURCES})
+	target_link_libraries(${LUA_TARGET_NAME}I ${LUA_TARGET_NAME}-library)
+	if(NOT WIN32)
+		target_link_libraries(${LUA_TARGET_NAME}I m)
+	endif()
+	##NOTE: On Windows you have to explicity name the target for the binaries to built??? (cmake --build build --target lua5I)
+	set_target_properties(${LUA_TARGET_NAME}I PROPERTIES EXCLUDE_FROM_ALL NO EXCLUDE_FROM_DEFAULT_BUILD NO)
+
+	LUAmakeLog("==  LUAC_SOURCES ${LUAC_SOURCES}")
+	add_executable(${LUA_TARGET_NAME}C)
+	if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/include")
+		LUAmakeLog("===  Adding includes: '${CMAKE_CURRENT_LIST_DIR}/include'")
+		target_include_directories(${LUA_TARGET_NAME}C PRIVATE "${CMAKE_CURRENT_LIST_DIR}/include" "${CMAKE_CURRENT_LIST_DIR}/src")
+	endif()
+	target_compile_options(${LUA_TARGET_NAME}C PRIVATE -Wno-everything)
+	target_sources(${LUA_TARGET_NAME}C PRIVATE ${LUAC_SOURCES})
+	target_link_libraries(${LUA_TARGET_NAME}C ${LUA_TARGET_NAME}-library)
+	if(NOT WIN32)
+		target_link_libraries(${LUA_TARGET_NAME}C m)
+	endif()
+	##NOTE: On Windows you have to explicity name the target for the binaries to built??? (cmake --build build --target lua5C)
+	set_target_properties(${LUA_TARGET_NAME}C PROPERTIES EXCLUDE_FROM_ALL NO EXCLUDE_FROM_DEFAULT_BUILD NO)
+
+	message("-- Exporting ${LUA_BINARIES_FULLDIR}/${LUA_TARGET_NAME}-binaries-export.cmake")
+	export(TARGETS
+				${LUA_TARGET_NAME}I
+				${LUA_TARGET_NAME}C
+			FILE
+				"${LUA_BINARIES_FULLDIR}/${LUA_TARGET_NAME}-binaries-export.cmake"
+		)
+endif()
+
+LUAmakeLog()
+file(GLOB_RECURSE
+		REPO_FILES_TO_READONLY
+		"${CMAKE_CURRENT_LIST_DIR}/*"
+		LIST_DIRECTORIES FALSE
+	)
+foreach(REPO_FILE_TO_READONLY ${REPO_FILES_TO_READONLY})
+	LUAmakeLog(": Setting '${REPO_FILE_TO_READONLY}' to READONLY")
+	if(EXISTS "${REPO_FILE_TO_READONLY}")
+		file(CHMOD "${REPO_FILE_TO_READONLY}" FILE_PERMISSIONS WORLD_READ GROUP_READ OWNER_READ)
+	else()
+		LUAmakeLog(":: Could not change the permissions for this file")
+	endif()
+endforeach()

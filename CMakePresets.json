@@ -1,0 +1,76 @@
+{
+        "version": 3,
+        "configurePresets": [
+                {
+                        "name": "base",
+                        "hidden": true,
+                        "generator": "Ninja",
+                        "binaryDir": "build",
+                        "environment": {
+                                "CC": "clang",
+                                "CXX": "clang++"
+                        },
+                        "vendor": {
+                                "microsoft.com/VisualStudioSettings/CMake/1.0": {
+                                        "intelliSenseMode": "windows-clang-x64"
+                                }
+                        }
+                },
+                {
+                        "name": "default",
+                        "displayName": "RelWithDebInfo",
+                        "description": "Enables optimizations (-Og or -O2) with debug information",
+                        "cacheVariables": {
+                                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+                        },
+                        "inherits": [
+                                "base"
+                        ]
+                },
+                {
+                        "name": "debug",
+                        "displayName": "Debug",
+                        "description": "Disables optimizations (-O0), enables debug information",
+                        "cacheVariables": {
+                                "CMAKE_BUILD_TYPE": "Debug"
+                        },
+                        "inherits": [
+                                "base"
+                        ]
+                },
+                {
+                        "name": "release",
+                        "displayName": "Release",
+                        "description": "Same as RelWithDebInfo, but disables debug information",
+                        "cacheVariables": {
+                                "CMAKE_BUILD_TYPE": "Release"
+                        },
+                        "inherits": [
+                                "base"
+                        ]
+                },
+                {
+                        "name": "vs2022",
+                        "displayName": "Visual Studio 2022 SLN generator",
+                        "description": "Build a Visual Studio 2022 project",
+                        "generator": "Visual Studio 17 2022",
+                        "toolset": "clangcl",
+                        "architecture": "version=10.0",
+                        "binaryDir": "build",
+                        "condition": {
+                                "type": "equals",
+                                "lhs": "${hostSystemName}",
+                                "rhs": "Windows"
+                        }
+                },
+                {
+                        "name": "ci",
+                        "cacheVariables": {
+                                "CI_BUILD": "ON"
+                        },
+                        "inherits": [
+                                "base"
+                        ]
+                }
+        ]
+}

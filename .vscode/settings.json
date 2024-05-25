@@ -1,0 +1,12 @@
+{
+        // Editor Settings
+        "editor.useTabStops": false,
+        "editor.tabSize": 2,
+        "editor.stickyTabStops": true,
+        "editor.trimAutoWhitespace": true,
+        "editor.formatOnType": false,
+        "editor.formatOnPaste": true,
+        "editor.formatOnSave": true,
+        "editor.formatOnSaveMode": "file",
+        // Debugger Settings
+}

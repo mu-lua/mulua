@@ -1,0 +1,35 @@
+Language: Cpp
+
+ColumnLimit: 120
+IndentWidth: 2
+TabWidth: 8
+UseTab: Never
+ContinuationIndentWidth: 3
+AlignTrailingComments: true
+
+SortIncludes: true
+IncludeCategories:
+  - Regex:           '^"(.*/)?pch\.h(pp)?"$'
+    Priority:        -20
+    CaseSensitive:   false
+  - Regex:           '^[<"](.*/)?windows\.h[>"]$'
+    Priority:        -10
+    CaseSensitive:   false
+  - Regex:           '^<.+\.h(pp)?>$'
+    Priority:        21
+    CaseSensitive:   false
+  - Regex:           '^<.+>$'
+    Priority:        20
+  - Regex:           '^".+"$'
+    Priority:        10
+
+
+AllowShortFunctionsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+
+BraceWrapping:
+  AfterFunction: true
+  AfterNamespace: true
+  SplitEmptyNamespace: false
+BreakBeforeBraces: Custom

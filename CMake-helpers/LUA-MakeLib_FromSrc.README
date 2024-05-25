@@ -1,0 +1,11 @@
+LUA Library has been built and included in the project
+
+Add the following line to your CMakeLists.txt to add the library to your executable
+  target_link_libraries(<executable-target-name> LUA::library)
+
+The following variables are also populated to provide information about the LUA library included:
+  @LUA_PROJECTNAME@_FOUND = TRUE
+  LUA_LOADED = TRUE
+  LUA_PROJECTNAME (parameter to LUA_MakeLib_FromSrc()) = '@_LUA_TARGET_NAME@'
+  LUA_VERSION     (parameter to LUA_MakeLib_FromSrc()) = '@_LUA_VERSION@'
+  LUA_BUILD_COMMANDS = @_LUA_BUILD_COMMANDS@

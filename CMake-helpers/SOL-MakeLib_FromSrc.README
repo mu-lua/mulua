@@ -1,0 +1,11 @@
+SOL Library has been built and included in the project
+
+Add the following line to your CMakeLists.txt to add the library to your executable
+  target_link_libraries(<executable-target-name> SOL::library)
+
+The following variables are also populated to provide information about the SOL library included:
+  @SOL_PROJECTNAME@_FOUND = TRUE
+  SOL_LOADED = TRUE
+  SOL_PROJECTNAME (parameter to SOL_MakeLib_FromSrc() call) = '@_SOL_TARGET_NAME@'
+  SOL_VERSION     (parameter to SOL_MakeLib_FromSrc() call) = '@_SOL_VERSION@'
+  SOL_JOINED_HEADERS (single/include for faster compilation) = '@_SOL_JOIN_HEADERS@'

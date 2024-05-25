@@ -1,0 +1,12 @@
+{
+        // Use command "Extensions: Install Missing Dependancies"
+        "recommendations": [
+                "ms-vscode.makefile-tools",
+                "ms-vscode.cmake-tools",
+                "ms-vscode.cpptools",
+                "ms-vscode.cpptools-extension-pack",
+                "trixnz.vscode-lua",
+                "JohnnyMorganz.stylua",
+                "mitaki28.vscode-clang",
+        ]
+}
